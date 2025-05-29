@@ -1,9 +1,11 @@
 {
   "name": "pomodoro_timer",
-  "private": true,
+  "author": "Hossein",
+  "description": "A Pomodoro app built with Electron, Typescript and React.",
+  "private": false,
   "version": "0.0.0",
   "type": "module",
-  "main": "dist-electron/main",
+  "main": "dist-electron/main.js",
   "scripts": {
     "dev:react": "vite",
     "dev:electron": "electron .",
@@ -11,9 +13,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "transpile:electron": "tsc -p src/electron/tsconfig.json",
-    "dist-mac": "npm run transpile:electron && npm run build && electron-builder --mac --arm64",
-    "dist-win": "npm run transpile:electron && npm run build && electron-builder --win --x64",
-    "dist-linux": "npm run transpile:electron && npm run build && electron-builder --linux --x64"
+    "dist:mac": "npm run transpile:electron && npm run build && electron-builder --mac --arm64",
+    "dist:win": "npm run transpile:electron && npm run build && electron-builder --win --x64",
+    "dist:linux": "npm run transpile:electron && npm run build && electron-builder --linux --x64"
   },
   "dependencies": {
     "react": "^19.1.0",

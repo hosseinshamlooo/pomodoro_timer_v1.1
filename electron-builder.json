@@ -1,6 +1,7 @@
 {
     "appId":"com.h-shamloo.timer",
     "files": ["dist-electron", "dist-react"],
+    "icon": "./desktopIcon.png",
     "mac":{
         "target": "dmg"
     },

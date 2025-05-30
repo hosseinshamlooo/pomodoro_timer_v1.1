@@ -27,23 +27,3 @@ body {
   align-items: center;
   padding: 2rem;
 }
-
-/* ========= Dark Mode ========== */
-.dark-mode {
-  background-color: var(--text-dark);
-  color: var(--text-light);
-}
-
-.dark-mode .card {
-  background-color: #1e2d2d;
-}
-
-.dark-mode .button {
-  background-color: var(--color-accent);
-  color: var(--text-light);
-}
-
-.dark-mode .button:hover {
-  background-color: var(--color-primary);
-  color: var(--text-dark);
-}

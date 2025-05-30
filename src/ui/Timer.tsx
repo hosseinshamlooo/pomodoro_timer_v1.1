@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-const FULL_DASH_ARRAY = 283; // full circle circumference
+const FULL_DASH_ARRAY = 283; // Circumference of the circle
 const TIME_LIMIT = 25 * 60; // 25 minutes in seconds
 
 const Timer = () => {
@@ -16,10 +16,7 @@ const Timer = () => {
     )}`;
   };
 
-  const calculateProgress = () => {
-    const rawTimeFraction = secondsLeft / TIME_LIMIT;
-    return (rawTimeFraction * FULL_DASH_ARRAY).toFixed(0);
-  };
+  const progress = (TIME_LIMIT - secondsLeft) / TIME_LIMIT; // 0 to 1
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -34,14 +31,10 @@ const Timer = () => {
   }, [isRunning]);
 
   const toggleTimer = () => setIsRunning((prev) => !prev);
-  const resetTimer = () => {
-    setSecondsLeft(TIME_LIMIT);
-    setIsRunning(false);
-  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
-      <div className="relative w-64 h-64">
+    <div className="flex flex-col items-center justify-center h-screen pt-30">
+      <div className="relative w-120 h-130">
         <svg
           className="transform -rotate-90"
           width="100%"
@@ -51,39 +44,35 @@ const Timer = () => {
           <circle
             cx="50"
             cy="50"
-            r="45"
-            stroke="#e5e7eb" // Tailwind's gray-200
-            strokeWidth="10"
+            r="36"
+            stroke="#e5e7eb" // gray-200
+            strokeWidth="1"
             fill="none"
           />
           <circle
             cx="50"
             cy="50"
-            r="45"
-            stroke="#3b82f6" // Tailwind's blue-500
-            strokeWidth="10"
+            r="36"
+            stroke="var(--color-accent)" // accent color
+            strokeWidth="1"
             fill="none"
             strokeDasharray={FULL_DASH_ARRAY}
-            strokeDashoffset={FULL_DASH_ARRAY - Number(calculateProgress())}
+            strokeDashoffset={FULL_DASH_ARRAY * (1 - progress)}
             strokeLinecap="round"
+            style={{ transition: "stroke-dashoffset 1s linear" }}
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-4xl font-bold text-gray-800">
+        <div className="absolute inset-0 flex items-center justify-center text-6xl font-semi-bold text-gray-800">
           {formatTime(secondsLeft)}
         </div>
       </div>
       <div className="flex gap-4 mt-6">
         <button
           onClick={toggleTimer}
-          className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          className="bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xl inline-block w-[180px] h-[50px] px-6 py-2"
+          style={{ background: "var(--color-accent)" }}
         >
           {isRunning ? "Pause" : "Start"}
-        </button>
-        <button
-          onClick={resetTimer}
-          className="px-6 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-        >
-          Reset
         </button>
       </div>
     </div>

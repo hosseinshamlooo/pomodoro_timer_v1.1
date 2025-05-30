@@ -6,6 +6,7 @@ const TIME_LIMIT = 25 * 60; // 25 minutes in seconds
 const Timer = () => {
   const [secondsLeft, setSecondsLeft] = useState(TIME_LIMIT);
   const [isRunning, setIsRunning] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -20,7 +21,7 @@ const Timer = () => {
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (isRunning) {
+    if (isRunning && !isPaused) {
       interval = setInterval(() => {
         setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
       }, 1000);
@@ -28,12 +29,25 @@ const Timer = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isRunning]);
+  }, [isRunning, isPaused]);
 
-  const toggleTimer = () => setIsRunning((prev) => !prev);
+  const startTimer = () => {
+    setIsRunning(true);
+    setIsPaused(false);
+  };
+
+  const pauseTimer = () => setIsPaused(true);
+
+  const continueTimer = () => setIsPaused(false);
+
+  const endTimer = () => {
+    setIsRunning(false);
+    setIsPaused(false);
+    setSecondsLeft(TIME_LIMIT);
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen pt-30">
+    <div className="flex flex-col items-center justify-center h-screen">
       <div className="relative w-120 h-130">
         <svg
           className="transform -rotate-90"
@@ -44,16 +58,16 @@ const Timer = () => {
           <circle
             cx="50"
             cy="50"
-            r="36"
-            stroke="#e5e7eb" // gray-200
+            r="40"
+            stroke="#e5e7eb"
             strokeWidth="1"
             fill="none"
           />
           <circle
             cx="50"
             cy="50"
-            r="36"
-            stroke="var(--color-accent)" // accent color
+            r="40"
+            stroke="var(--color-accent)"
             strokeWidth="1"
             fill="none"
             strokeDasharray={FULL_DASH_ARRAY}
@@ -62,18 +76,51 @@ const Timer = () => {
             style={{ transition: "stroke-dashoffset 1s linear" }}
           />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-6xl font-semi-bold text-gray-800">
-          {formatTime(secondsLeft)}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <div className="text-8xl font-semi-bold text-gray-800 h-[85px]">
+            {formatTime(secondsLeft)}
+          </div>
+          <div className="mt-2 h-[1px] text-sm font-bold tracking-wide text-[var(--color-accent)]">
+            {isPaused ? "Paused" : ""}
+          </div>
         </div>
       </div>
-      <div className="flex gap-4 mt-6">
-        <button
-          onClick={toggleTimer}
-          className="bg-blue-500 text-white rounded-full hover:bg-blue-600 transition text-xl inline-block w-[180px] h-[50px] px-6 py-2"
-          style={{ background: "var(--color-accent)" }}
-        >
-          {isRunning ? "Pause" : "Start"}
-        </button>
+
+      <div className="flex flex-col items-center gap-4 mt-10 h-[120px]">
+        {!isRunning && !isPaused && (
+          <button
+            onClick={startTimer}
+            className="text-white bg-[var(--color-accent)] hover:bg-[color:var(--color-accent-hover,#1e90ff)] rounded-full text-xl w-[180px] h-[50px] transition duration-200"
+          >
+            Start
+          </button>
+        )}
+
+        {isRunning && !isPaused && (
+          <button
+            onClick={pauseTimer}
+            className="bg-transparent border-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white rounded-full text-xl w-[180px] h-[50px] transition duration-200"
+          >
+            Pause
+          </button>
+        )}
+
+        {isRunning && isPaused && (
+          <>
+            <button
+              onClick={continueTimer}
+              className="text-white bg-[var(--color-accent)] hover:bg-transparent hover:text-[var(--color-accent)] hover:border-2 rounded-full border-[var(--color-accent)]rounded-full text-xl w-[180px] h-[50px] transition duration-200"
+            >
+              Continue
+            </button>
+            <button
+              onClick={endTimer}
+              className="bg-transparent border-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white rounded-full text-xl w-[180px] h-[50px] transition duration-200"
+            >
+              End
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

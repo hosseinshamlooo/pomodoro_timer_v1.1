@@ -47,7 +47,7 @@ const Timer = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center h-full">
       <div className="relative w-120 h-130">
         <svg
           className="transform -rotate-90"
@@ -77,10 +77,10 @@ const Timer = () => {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-8xl font-semi-bold text-gray-800 h-[85px]">
+          <div className="text-7xl font-semi-bold text-gray-800 h-[65px]">
             {formatTime(secondsLeft)}
           </div>
-          <div className="mt-2 h-[1px] text-sm font-bold tracking-wide text-[var(--color-accent)]">
+          <div className="mt-2 h-[10px] text-sm font-bold tracking-wide text-[var(--color-accent)]">
             {isPaused ? "Paused" : ""}
           </div>
         </div>

@@ -31,8 +31,10 @@ const Overview = () => {
   const totalFocus = pomodoros.reduce((acc, p) => acc + p.duration, 0);
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div className="h-full">
+      <h1 className="text-2xl font-semi-bold">Overview</h1>
       {/* 2x2 Box Grid */}
+
       <div
         style={{
           display: "grid",
@@ -42,9 +44,9 @@ const Overview = () => {
         }}
       >
         <Box title="Today's Pomos" value={todaysPomos.length} />
-        <Box title="Today's Focus (min)" value={todaysFocus} />
+        <Box title="Today's Focus Duration" value={todaysFocus} />
         <Box title="Total Pomos" value={totalPomos} />
-        <Box title="Total Focus (min)" value={totalFocus} />
+        <Box title="Total Focus Duration" value={totalFocus} />
       </div>
 
       {/* Simulate adding a pomodoro */}
@@ -62,7 +64,7 @@ const Box: React.FC<BoxProps> = ({ title, value }) => {
   return (
     <div
       style={{
-        backgroundColor: "#f0f0f0",
+        backgroundColor: "var(--color-primary)",
         borderRadius: "8px",
         padding: "1rem",
         textAlign: "center",

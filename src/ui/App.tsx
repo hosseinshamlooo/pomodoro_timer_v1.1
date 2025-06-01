@@ -4,16 +4,19 @@ import Overview from "./Overview";
 
 function App() {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "1rem",
-      }}
-    >
-      <Timer />
-      <Overview />
+    <div className="flex h-screen">
+      {/* Left Side */}
+      <div className="flex flex-1 items-center justify-center bg-red-100">
+        <Timer />
+      </div>
+
+      {/* Vertical Divider */}
+      <div className="w-[1px] bg-gray-300 h-full" />
+
+      {/* Right Side */}
+      <div className="flex flex-1 items-center justify-center bg-red-200 mr-20">
+        <Overview />
+      </div>
     </div>
   );
 }

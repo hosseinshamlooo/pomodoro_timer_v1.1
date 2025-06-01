@@ -18,3 +18,4 @@
 - [ ] Update the boxes
 - [ ] Make it so you can't save a Pomo under 5 minutes
 - [ ] Implement a Date/Time Formatter or something idk
+- [ ] Have to fix the bars at the very top too

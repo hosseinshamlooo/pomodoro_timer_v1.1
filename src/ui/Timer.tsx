@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 const FULL_DASH_ARRAY = 283; // Circumference of the circle
-const TIME_LIMIT = 25 * 60; // 25 minutes in seconds
+const TIME_LIMIT = 10; // multiple by 60 (the number of minutes)
 
 const Timer = () => {
   const [secondsLeft, setSecondsLeft] = useState(TIME_LIMIT);

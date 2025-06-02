@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 
 const FULL_DASH_ARRAY = 283; // Circumference of the circle
 const TIME_LIMIT = 10; // multiple by 60 (the number of minutes)
+const audio = new Audio("/bicyclebellsound.wav");
 
 const Timer = () => {
   const [secondsLeft, setSecondsLeft] = useState(TIME_LIMIT);
@@ -23,7 +24,14 @@ const Timer = () => {
     let interval: NodeJS.Timeout | null = null;
     if (isRunning && !isPaused) {
       interval = setInterval(() => {
-        setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+        setSecondsLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval!); // Stop the timer
+            audio.play(); // 🔔 Play the alarm sound
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
     }
     return () => {

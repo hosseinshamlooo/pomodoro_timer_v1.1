@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 
 const FULL_DASH_ARRAY = 283; // Circumference of the circle
-const TIME_LIMIT = 10; // multiple by 60 (the number of minutes)
+const WORK_DURATION = 10; // multiple by 60 (the number of minutes)
+const BREAK_DURATION = 5;
 const audio = new Audio("/bicyclebellsound.wav");
 
 const Timer = () => {
-  const [secondsLeft, setSecondsLeft] = useState(TIME_LIMIT);
+  const [secondsLeft, setSecondsLeft] = useState(WORK_DURATION);
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [isBreak, setIsBreak] = useState(false);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -18,26 +20,41 @@ const Timer = () => {
     )}`;
   };
 
-  const progress = (TIME_LIMIT - secondsLeft) / TIME_LIMIT; // 0 to 1
+  const progress = (WORK_DURATION - secondsLeft) / WORK_DURATION; // 0 to 1
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (isRunning && !isPaused) {
+
+    if (isRunning && !isPaused && secondsLeft > 0) {
       interval = setInterval(() => {
-        setSecondsLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval!); // Stop the timer
-            audio.play(); // 🔔 Play the alarm sound
-            return 0;
-          }
-          return prev - 1;
-        });
+        setSecondsLeft((prev) => prev - 1);
       }, 1000);
     }
+
     return () => {
       if (interval) clearInterval(interval);
     };
   }, [isRunning, isPaused]);
+
+  useEffect(() => {
+    if (secondsLeft === 0) {
+      audio.play();
+
+      if (!isBreak) {
+        // End work session → go to break
+        setIsBreak(true);
+        setIsRunning(false);
+        setIsPaused(false);
+        setSecondsLeft(BREAK_DURATION);
+      } else {
+        // End break → reset to work session
+        setIsBreak(false);
+        setIsRunning(false);
+        setIsPaused(false);
+        setSecondsLeft(WORK_DURATION);
+      }
+    }
+  }, [secondsLeft, isBreak]);
 
   const startTimer = () => {
     setIsRunning(true);
@@ -51,7 +68,7 @@ const Timer = () => {
   const endTimer = () => {
     setIsRunning(false);
     setIsPaused(false);
-    setSecondsLeft(TIME_LIMIT);
+    setSecondsLeft(WORK_DURATION);
   };
 
   return (
@@ -89,18 +106,27 @@ const Timer = () => {
             {formatTime(secondsLeft)}
           </div>
           <div className="mt-2 h-[10px] text-sm font-bold tracking-wide text-[var(--color-accent)]">
-            {isPaused ? "Paused" : ""}
+            {isBreak ? "you can relax now :)" : isPaused ? "Paused" : ""}
           </div>
         </div>
       </div>
 
       <div className="flex flex-col items-center gap-4 mt-10 h-[120px]">
-        {!isRunning && !isPaused && (
+        {!isRunning && !isPaused && !isBreak && (
           <button
             onClick={startTimer}
             className="text-white bg-[var(--color-accent)] hover:bg-[color:var(--color-accent-hover,#1e90ff)] rounded-full text-xl w-[180px] h-[50px] transition duration-200"
           >
             Start
+          </button>
+        )}
+
+        {!isRunning && !isPaused && isBreak && (
+          <button
+            onClick={startTimer}
+            className="bg-transparent border-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white rounded-full text-xl w-[180px] h-[50px] transition duration-200 cursor-pointer"
+          >
+            Relax
           </button>
         )}
 

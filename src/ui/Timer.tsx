@@ -48,21 +48,24 @@ const Timer = () => {
           audioRef.current?.play();
           setTimerFinished(true);
 
-          const nextIsBreak = !isBreak;
-          const nextDuration = nextIsBreak ? BREAK_DURATION : WORK_DURATION;
+          // Delay the reset by 100ms to let the bar finish visually
+          setTimeout(() => {
+            const nextIsBreak = !isBreak;
+            const nextDuration = nextIsBreak ? BREAK_DURATION : WORK_DURATION;
 
-          setIsBreak(nextIsBreak);
-          setDuration(nextDuration);
-          setSecondsLeft(nextDuration);
-          setIsRunning(false);
+            setIsBreak(nextIsBreak);
+            setDuration(nextDuration);
+            setSecondsLeft(nextDuration);
+            setIsRunning(false);
 
-          if (nextIsBreak) {
-            setJustSwitchedBreak(true);
-            setJustSwitchedWork(false);
-          } else {
-            setJustSwitchedWork(true);
-            setJustSwitchedBreak(false);
-          }
+            if (nextIsBreak) {
+              setJustSwitchedBreak(true);
+              setJustSwitchedWork(false);
+            } else {
+              setJustSwitchedWork(true);
+              setJustSwitchedBreak(false);
+            }
+          }, 700);
 
           return 0;
         }
@@ -189,7 +192,11 @@ const Timer = () => {
         {!isRunning && !isPaused && (
           <button
             onClick={isBreak ? startBreak : startWork} // reversed logic as before
-            className="text-white bg-[var(--color-accent)] hover:bg-[color:var(--color-accent-hover,#1e90ff)] rounded-full text-xl w-[180px] h-[50px] transition duration-200"
+            className={`text-white rounded-full text-xl w-[180px] h-[50px] transition duration-200 ${
+              isBreak
+                ? "bg-[#4ade80] hover:bg-[#22c55e]"
+                : "bg-[var(--color-accent)] hover:bg-[color:var(--color-accent-hover,#1e90ff)]"
+            }`}
           >
             {isBreak ? "Relax" : "Work"}
           </button>
@@ -198,7 +205,11 @@ const Timer = () => {
         {isRunning && !isPaused && (
           <button
             onClick={pauseTimer}
-            className="bg-transparent border-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white rounded-full text-xl w-[180px] h-[50px] transition duration-200"
+            className={`bg-transparent border-2 rounded-full text-xl w-[180px] h-[50px] transition duration-200 ${
+              isBreak
+                ? "border-[#4ade80] text-[#4ade80] hover:bg-[#4ade80] hover:text-white"
+                : "border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white"
+            }`}
           >
             Pause
           </button>
@@ -208,13 +219,21 @@ const Timer = () => {
           <>
             <button
               onClick={continueTimer}
-              className="text-white bg-[var(--color-accent)] hover:bg-transparent hover:text-[var(--color-accent)] hover:border-2 rounded-full border-[var(--color-accent)] text-xl w-[180px] h-[50px] transition duration-200"
+              className={`rounded-full border-2 text-xl w-[180px] h-[50px] transition duration-200 ${
+                isBreak
+                  ? "bg-[#4ade80] hover:bg-transparent hover:text-[#4ade80] border-[#4ade80] text-white"
+                  : "text-white bg-[var(--color-accent)] hover:bg-transparent hover:text-[var(--color-accent)] hover:border-2 border-[var(--color-accent)]"
+              }`}
             >
               Continue
             </button>
             <button
               onClick={endTimer}
-              className="bg-transparent border-2 border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white rounded-full text-xl w-[180px] h-[50px] transition duration-200"
+              className={`bg-transparent border-2 rounded-full text-xl w-[180px] h-[50px] transition duration-200 ${
+                isBreak
+                  ? "border-[#4ade80] text-[#4ade80] hover:bg-[#4ade80] hover:text-white"
+                  : "border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white"
+              }`}
             >
               End
             </button>

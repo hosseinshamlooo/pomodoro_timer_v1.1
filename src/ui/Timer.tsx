@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 const FULL_DASH_ARRAY = 283;
 const WORK_DURATION = 5; // in seconds
 const BREAK_DURATION = 3;
+const { ipcRenderer } = window.require("electron"); // allows React to talk to Electron
 
 const Timer = () => {
   const [secondsLeft, setSecondsLeft] = useState(WORK_DURATION);
@@ -13,6 +14,7 @@ const Timer = () => {
   const [timerFinished, setTimerFinished] = useState(false);
   const [justSwitchedWork, setJustSwitchedWork] = useState(false);
   const [justSwitchedBreak, setJustSwitchedBreak] = useState(false);
+  const [workStartTime, setWorkStartTime] = useState<Date | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -39,42 +41,59 @@ const Timer = () => {
     audioRef.current = new Audio("/bicyclebellsound.wav");
   }, []);
 
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    if (!isRunning || isPaused) return;
+    if (isRunning && !isPaused) {
+      intervalRef.current = setInterval(() => {
+        setSecondsLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalRef.current!);
+            intervalRef.current = null;
+            audioRef.current?.play();
+            setTimerFinished(true);
 
-    const interval = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          audioRef.current?.play();
-          setTimerFinished(true);
-
-          // Delay the reset by 100ms to let the bar finish visually
-          setTimeout(() => {
-            const nextIsBreak = !isBreak;
-            const nextDuration = nextIsBreak ? BREAK_DURATION : WORK_DURATION;
-
-            setIsBreak(nextIsBreak);
-            setDuration(nextDuration);
-            setSecondsLeft(nextDuration);
-            setIsRunning(false);
-
-            if (nextIsBreak) {
-              setJustSwitchedBreak(true);
-              setJustSwitchedWork(false);
-            } else {
-              setJustSwitchedWork(true);
-              setJustSwitchedBreak(false);
+            if (!isBreak && workStartTime) {
+              ipcRenderer.invoke("save-focus-session", {
+                type: "work",
+                start: workStartTime.toISOString(),
+                end: new Date().toISOString(),
+              });
+              setWorkStartTime(null); // reset after logging
             }
-          }, 700);
 
-          return 0;
-        }
+            setTimeout(() => {
+              const nextIsBreak = !isBreak;
+              const nextDuration = nextIsBreak ? BREAK_DURATION : WORK_DURATION;
 
-        return prev - 1;
-      });
-    }, 1000);
+              setIsBreak(nextIsBreak);
+              setDuration(nextDuration);
+              setSecondsLeft(nextDuration);
+              setIsRunning(false);
 
-    return () => clearInterval(interval);
+              if (nextIsBreak) {
+                setJustSwitchedBreak(true);
+                setJustSwitchedWork(false);
+              } else {
+                setJustSwitchedWork(true);
+                setJustSwitchedBreak(false);
+              }
+            }, 700);
+
+            return 0;
+          }
+
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [isRunning, isPaused, isBreak]);
 
   useEffect(() => {
@@ -99,14 +118,16 @@ const Timer = () => {
 
   // Memoized handlers
   const startWork = useCallback(() => {
-    setJustSwitchedWork(true); // Block transition for this render
+    const newDuration = WORK_DURATION;
 
+    setJustSwitchedWork(true);
     requestAnimationFrame(() => {
       setTimerFinished(false);
       setIsBreak(false);
-      setDuration(WORK_DURATION);
-      setSecondsLeft(WORK_DURATION);
-      setIsRunning(true);
+      setDuration(newDuration);
+      setSecondsLeft(newDuration); // Set this first
+      setWorkStartTime(new Date());
+      setIsRunning(true); // Then this
       setIsPaused(false);
     });
   }, []);
@@ -122,13 +143,35 @@ const Timer = () => {
     setIsPaused(false);
   }, []);
 
-  const pauseTimer = useCallback(() => setIsPaused(true), []);
-  const continueTimer = useCallback(() => setIsPaused(false), []);
+  const pauseTimer = useCallback(() => {
+    setIsPaused(true);
+  }, []);
+
+  const continueTimer = useCallback(() => {
+    setIsPaused(false);
+  }, []);
+
   const endTimer = useCallback(() => {
     setIsRunning(false);
     setIsPaused(false);
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Save session if timer was manually stopped during work
+    if (!isBreak && workStartTime) {
+      ipcRenderer.invoke("save-focus-session", {
+        type: "work",
+        start: workStartTime.toISOString(),
+        end: new Date().toISOString(),
+      });
+      setWorkStartTime(null); // reset after logging
+    }
+
     setSecondsLeft(duration);
-  }, [duration]);
+  }, [isBreak, duration, workStartTime]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full">

@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { saveSession } from "./storage.ts"; // your storage helper
+import type { FocusSession } from "./types.ts"; // type-only import
 
 const FULL_DASH_ARRAY = 283;
-const WORK_DURATION = 5; // in seconds
+const WORK_DURATION = 5; // seconds for demo, replace with your own
 const BREAK_DURATION = 3;
-const { ipcRenderer } = window.require("electron"); // allows React to talk to Electron
 
 const Timer = () => {
   const [secondsLeft, setSecondsLeft] = useState(WORK_DURATION);
@@ -14,11 +15,13 @@ const Timer = () => {
   const [timerFinished, setTimerFinished] = useState(false);
   const [justSwitchedWork, setJustSwitchedWork] = useState(false);
   const [justSwitchedBreak, setJustSwitchedBreak] = useState(false);
-  const [workStartTime, setWorkStartTime] = useState<Date | null>(null);
+
+  // Track session start time for saving sessions
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Format seconds as MM:SS
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = time % 60;
@@ -28,7 +31,6 @@ const Timer = () => {
     )}`;
   };
 
-  // Progress from 0 to 1
   const progress = timerFinished
     ? 1
     : isRunning
@@ -41,8 +43,6 @@ const Timer = () => {
     audioRef.current = new Audio("/bicyclebellsound.wav");
   }, []);
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
     if (isRunning && !isPaused) {
       intervalRef.current = setInterval(() => {
@@ -53,13 +53,19 @@ const Timer = () => {
             audioRef.current?.play();
             setTimerFinished(true);
 
-            if (!isBreak && workStartTime) {
-              ipcRenderer.invoke("save-focus-session", {
-                type: "work",
-                start: workStartTime.toISOString(),
-                end: new Date().toISOString(),
-              });
-              setWorkStartTime(null); // reset after logging
+            // Save session on natural finish if it was a work session
+            if (sessionStartTime !== null && !isBreak) {
+              const endTime = Date.now();
+              const session: FocusSession = {
+                id: crypto.randomUUID(),
+                startTime: sessionStartTime,
+                endTime,
+                duration: endTime - sessionStartTime,
+                label: "Work Session",
+                interrupted: false,
+              };
+              saveSession(session);
+              setSessionStartTime(null);
             }
 
             setTimeout(() => {
@@ -94,7 +100,7 @@ const Timer = () => {
         intervalRef.current = null;
       }
     };
-  }, [isRunning, isPaused, isBreak]);
+  }, [isRunning, isPaused, isBreak, sessionStartTime]);
 
   useEffect(() => {
     if (justSwitchedWork) {
@@ -110,28 +116,29 @@ const Timer = () => {
     }
   }, [justSwitchedBreak]);
 
-  // Helper functions for styles
   const getTransitionStyle = (justSwitched: boolean) =>
     justSwitched ? "none" : "stroke-dashoffset 1s linear";
 
   const getOpacity = (active: boolean) => (active ? 1 : 0);
 
-  // Memoized handlers
+  // Start a work session and set session start time
   const startWork = useCallback(() => {
-    const newDuration = WORK_DURATION;
+    const now = Date.now();
+    setSessionStartTime(now);
 
+    const newDuration = WORK_DURATION;
     setJustSwitchedWork(true);
     requestAnimationFrame(() => {
       setTimerFinished(false);
       setIsBreak(false);
       setDuration(newDuration);
-      setSecondsLeft(newDuration); // Set this first
-      setWorkStartTime(new Date());
-      setIsRunning(true); // Then this
+      setSecondsLeft(newDuration);
+      setIsRunning(true);
       setIsPaused(false);
     });
   }, []);
 
+  // Start a break session (no session tracking)
   const startBreak = useCallback(() => {
     setTimerFinished(false);
     setJustSwitchedWork(false);
@@ -141,6 +148,8 @@ const Timer = () => {
     setIsBreak(true);
     setIsRunning(true);
     setIsPaused(false);
+
+    setSessionStartTime(null); // clear session start during breaks
   }, []);
 
   const pauseTimer = useCallback(() => {
@@ -151,27 +160,31 @@ const Timer = () => {
     setIsPaused(false);
   }, []);
 
+  // End timer manually — save session as interrupted if running work session
   const endTimer = useCallback(() => {
     setIsRunning(false);
     setIsPaused(false);
-
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
 
-    // Save session if timer was manually stopped during work
-    if (!isBreak && workStartTime) {
-      ipcRenderer.invoke("save-focus-session", {
-        type: "work",
-        start: workStartTime.toISOString(),
-        end: new Date().toISOString(),
-      });
-      setWorkStartTime(null); // reset after logging
+    if (sessionStartTime !== null && !isBreak) {
+      const endTime = Date.now();
+      const session: FocusSession = {
+        id: crypto.randomUUID(),
+        startTime: sessionStartTime,
+        endTime,
+        duration: endTime - sessionStartTime,
+        label: "Work Session",
+        interrupted: true,
+      };
+      saveSession(session);
     }
 
+    setSessionStartTime(null);
     setSecondsLeft(duration);
-  }, [isBreak, duration, workStartTime]);
+  }, [duration, isBreak, sessionStartTime]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full">
@@ -234,7 +247,7 @@ const Timer = () => {
       <div className="flex flex-col items-center gap-4 mt-10 h-[120px]">
         {!isRunning && !isPaused && (
           <button
-            onClick={isBreak ? startBreak : startWork} // reversed logic as before
+            onClick={isBreak ? startBreak : startWork}
             className={`text-white rounded-full text-xl w-[180px] h-[50px] transition duration-200 ${
               isBreak
                 ? "bg-[#4ade80] hover:bg-[#22c55e]"
@@ -258,29 +271,26 @@ const Timer = () => {
           </button>
         )}
 
-        {isRunning && isPaused && (
-          <>
-            <button
-              onClick={continueTimer}
-              className={`rounded-full border-2 text-xl w-[180px] h-[50px] transition duration-200 ${
-                isBreak
-                  ? "bg-[#4ade80] hover:bg-transparent hover:text-[#4ade80] border-[#4ade80] text-white"
-                  : "text-white bg-[var(--color-accent)] hover:bg-transparent hover:text-[var(--color-accent)] hover:border-2 border-[var(--color-accent)]"
-              }`}
-            >
-              Continue
-            </button>
-            <button
-              onClick={endTimer}
-              className={`bg-transparent border-2 rounded-full text-xl w-[180px] h-[50px] transition duration-200 ${
-                isBreak
-                  ? "border-[#4ade80] text-[#4ade80] hover:bg-[#4ade80] hover:text-white"
-                  : "border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white"
-              }`}
-            >
-              End
-            </button>
-          </>
+        {isPaused && (
+          <button
+            onClick={continueTimer}
+            className={`bg-transparent border-2 rounded-full text-xl w-[180px] h-[50px] transition duration-200 ${
+              isBreak
+                ? "border-[#4ade80] text-[#4ade80] hover:bg-[#4ade80] hover:text-white"
+                : "border-[var(--color-accent)] text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white"
+            }`}
+          >
+            Continue
+          </button>
+        )}
+
+        {(isRunning || isPaused) && (
+          <button
+            onClick={endTimer}
+            className="text-red-500 mt-5 hover:underline"
+          >
+            End Timer
+          </button>
         )}
       </div>
     </div>

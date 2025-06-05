@@ -1,6 +1,7 @@
 import React from "react";
 import Timer from "./Timer";
 import Overview from "./Overview";
+import History from "./History";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       {/* Right Side */}
       <div className="flex flex-1 items-center justify-center">
         <Overview />
+        <History />
       </div>
     </div>
   );

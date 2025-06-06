@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { saveSession } from "./storage.ts"; // your storage helper
-import type { FocusSession } from "./types.ts"; // type-only import
+import { saveSession } from "./storage.ts";
+import type { FocusSession } from "./types.ts";
+import bellSound from "./bicyclebellsound.wav"; // adjust the filename if needed
 
 const FULL_DASH_ARRAY = 283;
-const WORK_DURATION = 5; // seconds for demo, replace with your own
+const WORK_DURATION = 5;
 const BREAK_DURATION = 3;
 
 const Timer = () => {
@@ -16,10 +17,7 @@ const Timer = () => {
   const [justSwitchedWork, setJustSwitchedWork] = useState(false);
   const [justSwitchedBreak, setJustSwitchedBreak] = useState(false);
 
-  // Track session start time for saving sessions
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
-
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const formatTime = (time: number) => {
@@ -31,17 +29,28 @@ const Timer = () => {
     )}`;
   };
 
-  const progress = timerFinished
-    ? 1
-    : isRunning
-    ? 1 - secondsLeft / duration
-    : 0;
+  const progress =
+    isRunning || timerFinished
+      ? Math.min(1, Math.round((1 - secondsLeft / duration) * 1000) / 1000)
+      : 0;
 
   const breakProgress = isRunning && isBreak ? 1 - secondsLeft / duration : 0;
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
-    audioRef.current = new Audio("/bicyclebellsound.wav");
+    audioRef.current = new Audio(bellSound);
+    audioRef.current.volume = 1.0;
   }, []);
+
+  useEffect(() => {
+    if (secondsLeft === 0 && isRunning) {
+      audioRef.current?.play().catch((err) => {
+        console.error("Audio play failed:", err);
+      });
+      setTimerFinished(true);
+    }
+  }, [secondsLeft, isRunning]);
 
   useEffect(() => {
     if (isRunning && !isPaused) {
@@ -50,10 +59,12 @@ const Timer = () => {
           if (prev <= 1) {
             clearInterval(intervalRef.current!);
             intervalRef.current = null;
-            audioRef.current?.play();
-            setTimerFinished(true);
 
-            // Save session on natural finish if it was a work session
+            setTimerFinished(true); // Make progress = 1 immediately
+            audioRef.current
+              ?.play()
+              .catch((err) => console.error("Audio play failed:", err));
+
             if (sessionStartTime !== null && !isBreak) {
               const endTime = Date.now();
               const session: FocusSession = {
@@ -76,6 +87,7 @@ const Timer = () => {
               setDuration(nextDuration);
               setSecondsLeft(nextDuration);
               setIsRunning(false);
+              setTimerFinished(false); // Reset progress to 0
 
               if (nextIsBreak) {
                 setJustSwitchedBreak(true);
@@ -84,7 +96,7 @@ const Timer = () => {
                 setJustSwitchedWork(true);
                 setJustSwitchedBreak(false);
               }
-            }, 700);
+            }, 1000);
 
             return 0;
           }
@@ -121,7 +133,6 @@ const Timer = () => {
 
   const getOpacity = (active: boolean) => (active ? 1 : 0);
 
-  // Start a work session and set session start time
   const startWork = useCallback(() => {
     const now = Date.now();
     setSessionStartTime(now);
@@ -138,7 +149,6 @@ const Timer = () => {
     });
   }, []);
 
-  // Start a break session (no session tracking)
   const startBreak = useCallback(() => {
     setTimerFinished(false);
     setJustSwitchedWork(false);
@@ -148,8 +158,7 @@ const Timer = () => {
     setIsBreak(true);
     setIsRunning(true);
     setIsPaused(false);
-
-    setSessionStartTime(null); // clear session start during breaks
+    setSessionStartTime(null);
   }, []);
 
   const pauseTimer = useCallback(() => {
@@ -160,7 +169,6 @@ const Timer = () => {
     setIsPaused(false);
   }, []);
 
-  // End timer manually — save session as interrupted if running work session
   const endTimer = useCallback(() => {
     setIsRunning(false);
     setIsPaused(false);
@@ -188,7 +196,6 @@ const Timer = () => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full">
-      {/* Timer Circle */}
       <div className="relative w-120 h-130">
         <svg className="transform -rotate-90" viewBox="0 0 100 100">
           <circle
@@ -199,7 +206,6 @@ const Timer = () => {
             strokeWidth="1"
             fill="none"
           />
-          {/* Break circle */}
           <circle
             cx="50"
             cy="50"
@@ -215,7 +221,6 @@ const Timer = () => {
               opacity: getOpacity(isBreak && isRunning),
             }}
           />
-          {/* Work circle */}
           <circle
             cx="50"
             cy="50"
@@ -243,7 +248,6 @@ const Timer = () => {
         </div>
       </div>
 
-      {/* Buttons */}
       <div className="flex flex-col items-center gap-4 mt-10 h-[120px]">
         {!isRunning && !isPaused && (
           <button

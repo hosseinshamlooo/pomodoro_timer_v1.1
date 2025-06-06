@@ -27,8 +27,6 @@ const Overview = () => {
 
   const todaysPomos = pomodoros.filter((p) => isToday(p.completedAt));
   const todaysFocus = todaysPomos.reduce((acc, p) => acc + p.duration, 0);
-  const totalPomos = pomodoros.length;
-  const totalFocus = pomodoros.reduce((acc, p) => acc + p.duration, 0);
 
   return (
     <div className="h-full">
@@ -45,8 +43,6 @@ const Overview = () => {
       >
         <Box title="Today's Pomos" value={todaysPomos.length} />
         <Box title="Today's Focus Duration" value={todaysFocus} />
-        <Box title="Total Pomos" value={totalPomos} />
-        <Box title="Total Focus Duration" value={totalFocus} />
       </div>
 
       {/* Simulate adding a pomodoro */}

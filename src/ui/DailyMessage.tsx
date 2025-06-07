@@ -45,7 +45,7 @@ const DailyMessage: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-4 text-center text-xl font-semibold text-gray-800">
+    <div className="text-center text-4xl font-bold text-gray-800">
       {message}
     </div>
   );

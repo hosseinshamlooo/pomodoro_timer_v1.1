@@ -39,20 +39,20 @@ const History: React.FC = () => {
   }, {} as Record<string, FocusSession[]>);
 
   return (
-    <div>
-      <h2>Session History</h2>
+    <div className="self-start w-full max-w-md px-6">
+      <h2 className="text-lg font-bold mb-2">Session History</h2>
       {sessions.length === 0 ? (
         <p>No sessions yet</p>
       ) : (
         Object.entries(groupedSessions).map(([date, daySessions]) => (
-          <div key={date}>
-            <h3>{date}</h3>
-            <ul>
+          <div key={date} className="mb-4">
+            <h3 className="text-md font-semibold">{date}</h3>
+            <ul className="list-disc list-inside">
               {daySessions.map((session) => (
                 <li key={session.id}>
                   🍅 {formatTime(session.startTime)} -{" "}
                   {formatTime(session.endTime)} |{" "}
-                  {(session.duration / 60000).toFixed(1)} min |{" "}
+                  {(session.duration / 60000).toFixed(1)} min
                 </li>
               ))}
             </ul>

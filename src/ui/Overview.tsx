@@ -29,7 +29,7 @@ const Overview = () => {
   const todaysFocus = todaysPomos.reduce((acc, p) => acc + p.duration, 0);
 
   return (
-    <div className="h-full">
+    <div className="h-45">
       <h1 className="text-2xl font-semi-bold">Overview</h1>
       {/* 2x2 Box Grid */}
 

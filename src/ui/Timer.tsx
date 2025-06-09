@@ -44,63 +44,61 @@ const Timer = () => {
   }, []);
 
   useEffect(() => {
-    if (secondsLeft === 0 && isRunning) {
-      audioRef.current?.play().catch((err) => {
-        console.error("Audio play failed:", err);
-      });
-      setTimerFinished(true);
-    }
-  }, [secondsLeft, isRunning]);
-
-  useEffect(() => {
     if (isRunning && !isPaused) {
+      // Ref flag to prevent duplicate runs inside the same tick
+      let timerEnded = false;
+
       intervalRef.current = setInterval(() => {
         setSecondsLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(intervalRef.current!);
-            intervalRef.current = null;
+            if (!timerEnded) {
+              timerEnded = true;
+              clearInterval(intervalRef.current!);
+              intervalRef.current = null;
 
-            setTimerFinished(true); // Make progress = 1 immediately
-            audioRef.current
-              ?.play()
-              .catch((err) => console.error("Audio play failed:", err));
+              setTimerFinished(true);
+              audioRef.current
+                ?.play()
+                .catch((err) => console.error("Audio play failed:", err));
 
-            if (sessionStartTime !== null && !isBreak) {
-              const endTime = Date.now();
-              const session: FocusSession = {
-                id: crypto.randomUUID(),
-                startTime: sessionStartTime,
-                endTime,
-                duration: endTime - sessionStartTime,
-                label: "Work Session",
-                interrupted: false,
-              };
-              saveSession(session);
-              setSessionStartTime(null);
-            }
-
-            setTimeout(() => {
-              const nextIsBreak = !isBreak;
-              const nextDuration = nextIsBreak ? BREAK_DURATION : WORK_DURATION;
-
-              setIsBreak(nextIsBreak);
-              setDuration(nextDuration);
-              setSecondsLeft(nextDuration);
-              setIsRunning(false);
-              setTimerFinished(false); // Reset progress to 0
-
-              if (nextIsBreak) {
-                setJustSwitchedBreak(true);
-                setJustSwitchedWork(false);
-              } else {
-                setJustSwitchedWork(true);
-                setJustSwitchedBreak(false);
+              if (sessionStartTime !== null && !isBreak) {
+                const endTime = Date.now();
+                const session: FocusSession = {
+                  id: crypto.randomUUID(),
+                  startTime: sessionStartTime,
+                  endTime,
+                  duration: endTime - sessionStartTime,
+                  label: "Work Session",
+                  interrupted: false,
+                };
+                saveSession(session);
+                setSessionStartTime(null);
               }
-            }, 1000);
+
+              setTimeout(() => {
+                const nextIsBreak = !isBreak;
+                const nextDuration = nextIsBreak
+                  ? BREAK_DURATION
+                  : WORK_DURATION;
+
+                setIsBreak(nextIsBreak);
+                setDuration(nextDuration);
+                setSecondsLeft(nextDuration);
+                setIsRunning(false);
+                setTimerFinished(false);
+
+                if (nextIsBreak) {
+                  setJustSwitchedBreak(true);
+                  setJustSwitchedWork(false);
+                } else {
+                  setJustSwitchedWork(true);
+                  setJustSwitchedBreak(false);
+                }
+              }, 1000);
+            }
 
             return 0;
           }
-
           return prev - 1;
         });
       }, 1000);

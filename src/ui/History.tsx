@@ -19,16 +19,37 @@ const formatTime = (value: string | number): string => {
 const History: React.FC = () => {
   const [sessions, setSessions] = useState<FocusSession[]>([]);
 
-  useEffect(() => {
+  const loadSessions = () => {
     const data = getSessions();
-    const validSessions = data
+
+    // Remove duplicates by ID
+    const uniqueSessions = Array.from(
+      new Map(data.map((s) => [s.id, s])).values()
+    );
+
+    const validSessions = uniqueSessions
       .filter(
         (s: FocusSession) =>
           !isNaN(new Date(s.startTime).getTime()) &&
           !isNaN(new Date(s.endTime).getTime())
       )
       .reverse(); // Show latest first
+
     setSessions(validSessions);
+  };
+
+  useEffect(() => {
+    loadSessions(); // Initial load
+
+    const handleUpdate = () => {
+      loadSessions(); // Reload on custom event
+    };
+
+    window.addEventListener("sessionsUpdated", handleUpdate);
+
+    return () => {
+      window.removeEventListener("sessionsUpdated", handleUpdate);
+    };
   }, []);
 
   const groupedSessions = sessions.reduce((acc, session) => {

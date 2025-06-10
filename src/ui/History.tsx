@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getSessions } from "./storage";
+import { getSessions, clearSessions } from "./storage"; // ✅ Add `clearSessions`
 import type { FocusSession } from "./types";
 
 const formatTime = (value: string | number): string => {
@@ -9,7 +9,6 @@ const formatTime = (value: string | number): string => {
     : date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 };
 
-// ✅ NEW: Utility to get time-of-day label
 const getTimeOfDayLabel = (value: string | number): string => {
   const date = new Date(value);
   const hour = date.getHours();
@@ -36,7 +35,7 @@ const History: React.FC = () => {
           !isNaN(new Date(s.startTime).getTime()) &&
           !isNaN(new Date(s.endTime).getTime())
       )
-      .reverse(); // Show latest first
+      .reverse();
 
     setSessions(validSessions);
   };
@@ -55,7 +54,21 @@ const History: React.FC = () => {
     };
   }, []);
 
-  // ✅ CHANGED: Group sessions by time of day label instead of date
+  // ✅ Midnight reset logic
+  useEffect(() => {
+    const checkMidnight = () => {
+      const now = new Date();
+      if (now.getHours() === 0 && now.getMinutes() === 0) {
+        clearSessions(); // ✅ Clear sessions from storage
+        setSessions([]); // ✅ Clear sessions from UI
+      }
+    };
+
+    const intervalId = setInterval(checkMidnight, 60 * 1000); // Check every minute
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   const groupedByTimeOfDay = sessions.reduce((acc, session) => {
     const label = getTimeOfDayLabel(session.startTime);
     if (!acc[label]) acc[label] = [];
@@ -63,27 +76,30 @@ const History: React.FC = () => {
     return acc;
   }, {} as Record<string, FocusSession[]>);
 
+  const timeOfDayOrder = ["Early Morning", "Morning", "Afternoon", "Evening"];
+
   return (
     <div className="self-start w-full max-w-md px-6">
       <h2 className="text-lg font-bold mb-2">Session History</h2>
       {sessions.length === 0 ? (
         <p>No sessions yet</p>
       ) : (
-        // ✅ CHANGED: Render by time-of-day groups only if they exist
-        Object.entries(groupedByTimeOfDay).map(([label, sessionsInLabel]) => (
-          <div key={label} className="mb-4">
-            <h3 className="text-md font-semibold">{label}</h3>
-            <ul className="list-disc list-inside">
-              {sessionsInLabel.map((session) => (
-                <li key={session.id}>
-                  🍅 {formatTime(session.startTime)} -{" "}
-                  {formatTime(session.endTime)} |{" "}
-                  {(session.duration / 60000).toFixed(1)} min
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
+        timeOfDayOrder.map((label) =>
+          groupedByTimeOfDay[label] ? (
+            <div key={label} className="mb-4">
+              <h3 className="text-md font-semibold">{label}</h3>
+              <ul className="list-disc list-inside">
+                {groupedByTimeOfDay[label].map((session) => (
+                  <li key={session.id}>
+                    🍅 {formatTime(session.startTime)} -{" "}
+                    {formatTime(session.endTime)} |{" "}
+                    {(session.duration / 60000).toFixed(1)} min
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null
+        )
       )}
     </div>
   );

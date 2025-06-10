@@ -16,6 +16,6 @@ export const getSessions = (): FocusSession[] => {
   return raw ? JSON.parse(raw) : [];
 };
 
-export const clearSessions = () => {
-  localStorage.removeItem(STORAGE_KEY);
+export const clearSessions = (): void => {
+  localStorage.removeItem("sessions");
 };

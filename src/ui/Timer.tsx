@@ -4,10 +4,14 @@ import type { FocusSession } from "./types.ts";
 import bellSound from "./bicyclebellsound.wav"; // adjust the filename if needed
 
 const FULL_DASH_ARRAY = 283;
-const WORK_DURATION = 5;
+const WORK_DURATION = 60;
 const BREAK_DURATION = 3;
 
-const Timer = () => {
+interface TimerProps {
+  onSessionEnd: () => void;
+}
+
+const Timer: React.FC<TimerProps> = ({ onSessionEnd }) => {
   const [secondsLeft, setSecondsLeft] = useState(WORK_DURATION);
   const [duration, setDuration] = useState(WORK_DURATION);
   const [isRunning, setIsRunning] = useState(false);
@@ -73,6 +77,8 @@ const Timer = () => {
                 };
                 saveSession(session);
                 setSessionStartTime(null);
+
+                onSessionEnd();
               }
 
               setTimeout(() => {

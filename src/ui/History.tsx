@@ -2,18 +2,22 @@ import React, { useEffect, useState } from "react";
 import { getSessions } from "./storage";
 import type { FocusSession } from "./types";
 
-const formatDate = (value: string | number): string => {
-  const date = new Date(value);
-  return isNaN(date.getTime())
-    ? "Invalid Date"
-    : date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
-};
-
 const formatTime = (value: string | number): string => {
   const date = new Date(value);
   return isNaN(date.getTime())
     ? "Invalid Time"
     : date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+};
+
+// ✅ NEW: Utility to get time-of-day label
+const getTimeOfDayLabel = (value: string | number): string => {
+  const date = new Date(value);
+  const hour = date.getHours();
+
+  if (hour >= 0 && hour < 6) return "Early Morning";
+  if (hour >= 6 && hour < 12) return "Morning";
+  if (hour >= 12 && hour < 18) return "Afternoon";
+  return "Evening";
 };
 
 const History: React.FC = () => {
@@ -22,7 +26,6 @@ const History: React.FC = () => {
   const loadSessions = () => {
     const data = getSessions();
 
-    // Remove duplicates by ID
     const uniqueSessions = Array.from(
       new Map(data.map((s) => [s.id, s])).values()
     );
@@ -39,10 +42,10 @@ const History: React.FC = () => {
   };
 
   useEffect(() => {
-    loadSessions(); // Initial load
+    loadSessions();
 
     const handleUpdate = () => {
-      loadSessions(); // Reload on custom event
+      loadSessions();
     };
 
     window.addEventListener("sessionsUpdated", handleUpdate);
@@ -52,10 +55,11 @@ const History: React.FC = () => {
     };
   }, []);
 
-  const groupedSessions = sessions.reduce((acc, session) => {
-    const day = formatDate(session.startTime);
-    if (!acc[day]) acc[day] = [];
-    acc[day].push(session);
+  // ✅ CHANGED: Group sessions by time of day label instead of date
+  const groupedByTimeOfDay = sessions.reduce((acc, session) => {
+    const label = getTimeOfDayLabel(session.startTime);
+    if (!acc[label]) acc[label] = [];
+    acc[label].push(session);
     return acc;
   }, {} as Record<string, FocusSession[]>);
 
@@ -65,11 +69,12 @@ const History: React.FC = () => {
       {sessions.length === 0 ? (
         <p>No sessions yet</p>
       ) : (
-        Object.entries(groupedSessions).map(([date, daySessions]) => (
-          <div key={date} className="mb-4">
-            <h3 className="text-md font-semibold">{date}</h3>
+        // ✅ CHANGED: Render by time-of-day groups only if they exist
+        Object.entries(groupedByTimeOfDay).map(([label, sessionsInLabel]) => (
+          <div key={label} className="mb-4">
+            <h3 className="text-md font-semibold">{label}</h3>
             <ul className="list-disc list-inside">
-              {daySessions.map((session) => (
+              {sessionsInLabel.map((session) => (
                 <li key={session.id}>
                   🍅 {formatTime(session.startTime)} -{" "}
                   {formatTime(session.endTime)} |{" "}

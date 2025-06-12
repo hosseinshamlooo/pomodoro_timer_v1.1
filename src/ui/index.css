@@ -27,3 +27,8 @@ body {
   align-items: center;
   padding: 2rem;
 }
+
+li {
+  margin-bottom: 5px;
+  /* or any value you want */
+}

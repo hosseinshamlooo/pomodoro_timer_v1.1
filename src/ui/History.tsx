@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getSessions } from "./storage";
 import type { FocusSession } from "./types";
+import { GiTomato } from "react-icons/gi";
 
 interface Props {
   sessionUpdated: boolean;
@@ -69,7 +70,7 @@ const History: React.FC<Props> = ({ sessionUpdated, onHandled }) => {
 
   return (
     <div className="self-start w-full max-w-md px-6">
-      <h2 className="text-lg font-bold mb-2">Session History</h2>
+      <h2 className="text-xl font-bold mb-2">Session History</h2>
       {sessions.length === 0 ? (
         <p>No sessions yet</p>
       ) : (
@@ -80,12 +81,22 @@ const History: React.FC<Props> = ({ sessionUpdated, onHandled }) => {
           return (
             <div key={label} className="mb-4">
               <h3 className="text-md font-semibold">{label}</h3>
-              <ul className="list-disc list-inside">
+              <ul className="list-none space-y-2">
                 {sessionsInLabel.map((session) => (
-                  <li key={session.id}>
-                    🍅 {formatTime(session.startTime)} -{" "}
-                    {formatTime(session.endTime)} |{" "}
-                    {(session.duration / 60000).toFixed(1)} min
+                  <li
+                    key={session.id}
+                    className="flex justify-between items-center text-[var(--color-accent)]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <GiTomato className="w-5 h-5 text-[var(--color-accent)]" />
+                      <span>
+                        {formatTime(session.startTime)} –{" "}
+                        {formatTime(session.endTime)}
+                      </span>
+                    </div>
+                    <span className="min-w-[60px] text-right">
+                      {(session.duration / 60000).toFixed(1)} min
+                    </span>
                   </li>
                 ))}
               </ul>

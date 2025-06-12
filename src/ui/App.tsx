@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Timer from "./Timer";
 import Overview from "./Overview";
 import History from "./History";

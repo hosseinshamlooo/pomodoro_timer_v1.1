@@ -48,7 +48,6 @@ const Overview: React.FC<Props> = ({ sessionUpdated, onHandled }) => {
           gridTemplateColumns: "1fr 1fr",
           gap: "1rem",
           marginBottom: "2rem",
-          textAlign: "left",
         }}
       >
         <Box title="Today's Pomos" value={todaysSessions.length} />
@@ -70,7 +69,7 @@ const Box: React.FC<BoxProps> = ({ title, value }) => {
         backgroundColor: "var(--color-primary, #f0f0f0)",
         borderRadius: "8px",
         padding: "1rem",
-        textAlign: "center",
+        textAlign: "left", // ✅ changed from "center" to "left"
         boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
       }}
     >

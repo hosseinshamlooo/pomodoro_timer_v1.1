@@ -48,6 +48,7 @@ const Overview: React.FC<Props> = ({ sessionUpdated, onHandled }) => {
           gridTemplateColumns: "1fr 1fr",
           gap: "1rem",
           marginBottom: "2rem",
+          textAlign: "left",
         }}
       >
         <Box title="Today's Pomos" value={todaysSessions.length} />

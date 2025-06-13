@@ -245,7 +245,7 @@ const Timer: React.FC<TimerProps> = ({ onSessionEnd }) => {
           <div className="text-7xl font-semibold text-gray-800 h-[65px]">
             {formatTime(secondsLeft)}
           </div>
-          <div className="mt-2 h-[10px] text-sm font-bold tracking-wide text-[var(--color-accent)]">
+          <div className="mt-2 h-[36px] text-sm font-bold tracking-wide text-[var(--color-accent)]">
             {!isRunning && !isPaused && (isBreak ? "you can relax now :)" : "")}
             {isPaused && "Paused"}
           </div>

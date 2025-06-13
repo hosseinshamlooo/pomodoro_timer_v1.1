@@ -4,7 +4,7 @@ import { isDev } from './util.js';
 
 app.on('ready', () => { 
 
-    Menu.setApplicationMenu(null); // 🔥 Removes the default menu
+    //Menu.setApplicationMenu(null); // 🔥 Removes the default menu
     
     const mainWindow = new BrowserWindow({
         width: 1000,
